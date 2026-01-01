@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عداء النقود - لعبة متجهة للأعلى</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c2461 0%, #1e3799 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            direction: rtl;
+            overflow: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #ff9f43;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            background: linear-gradient(90deg, #ff9f43, #ffaf60);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(255, 159, 67, 0.3);
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #aaa;
+        }
+        
+        .game-area {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .right-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .game-stats {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff9f43;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .hearts-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .heart {
+            font-size: 1.8rem;
+            color: #ff3838;
+            transition: all 0.3s;
+        }
+        
+        .heart.lost {
+            color: #555;
+            transform: scale(0.8);
+        }
+        
+        .controls-info {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        
+        .controls-info h2 {
+            color: #ff9f43;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .keyboard-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, auto);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .key {
+            background: linear-gradient(135deg, #333, #555);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            border: 2px solid #666;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .key.active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #ff9f43, #ff7b00);
+            border-color: #ff9f43;
+        }
+        
+        .key .key-icon {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .key .key-label {
+            font-size: 0.9rem;
+            color: #ddd;
+        }
+        
+        .key.left {
+            grid-column: 1;
+            grid-row: 1;
+        }
+        
+        .key.right {
+            grid-column: 3;
+            grid-row: 1;
+        }
+        
+        .key.up {
+            grid-column: 2;
+            grid-row: 1;
+        }
+        
+        .key.down {
+            grid-column: 2;
+            grid-row: 2;
+        }
+        
+        .key.space {
+            grid-column: 1 / span 3;
+            grid-row: 3;
+        }
+        
+        .game-container {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            background-color: #111;
+            aspect-ratio: 9/16;
+            min-height: 700px;
+        }
+        
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .game-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 10;
+            border: 3px solid #ff9f43;
+            display: none;
+            width: 80%;
+            max-width: 500px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .game-message h2 {
+            color: #ff9f43;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        
+        .game-message p {
+            margin-bottom: 15px;
+            color: #ddd;
+            font-size: 1.1rem;
+        }
+        
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-final {
+            background: rgba(255, 159, 67, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 159, 67, 0.3);
+        }
+        
+        .stat-final-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ff9f43;
+            margin-bottom: 5px;
+        }
+        
+        .stat-final-label {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, #ff9f43, #ff7b00);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 159, 67, 0.5);
+        }
+        
+        .instructions {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+        }
+        
+        .instructions h2 {
+            color: #ff9f43;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .instructions ul {
+            padding-right: 20px;
+            color: #aaa;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .instructions i {
+            color: #ff9f43;
+            margin-left: 5px;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        /* تأثيرات الرسوم */
+        .effect {
+            position: absolute;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        /* رسالة البدء */
+        .start-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            z-index: 20;
+            border: 3px solid #ff9f43;
+            width: 80%;
+            max-width: 500px;
+        }
+        
+        .start-message h2 {
+            color: #ff9f43;
+            margin-bottom: 20px;
+            font-size: 2rem;
+        }
+        
+        .start-message p {
+            margin-bottom: 15px;
+            color: #ddd;
+            font-size: 1.1rem;
+        }
+        
+        .character-preview {
+            width: 100px;
+            height: 120px;
+            margin: 20px auto;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-running"></i> عداء النقود</h1>
+            <div class="subtitle">لعبة متجهة للأعلى - اصعد وأجمع النقود</div>
+        </header>
+        
+        <div class="game-area">
+            <div class="left-panel">
+                <div class="game-stats">
+                    <div class="stats-grid">
+                        <div class="stat">
+                            <div class="stat-value" id="coins">0</div>
+                            <div class="stat-label"><i class="fas fa-coins"></i> النقود</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="score">0</div>
+                            <div class="stat-label"><i class="fas fa-star"></i> النتيجة</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="height">0</div>
+                            <div class="stat-label"><i class="fas fa-mountain"></i> الارتفاع</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value" id="speed">3.0</div>
+                            <div class="stat-label"><i class="fas fa-tachometer-alt"></i> السرعة</div>
+                        </div>
+                    </div>
+                    
+                    <div class="hearts-container" id="hearts">
+                        <div class="heart"><i class="fas fa-heart"></i></div>
+                        <div class="heart"><i class="fas fa-heart"></i></div>
+                        <div class="heart"><i class="fas fa-heart"></i></div>
+                    </div>
+                </div>
+                
+                <div class="controls-info">
+                    <h2><i class="fas fa-keyboard"></i> التحكم باللعبة</h2>
+                    <div class="keyboard-controls">
+                        <div class="key left" id="key-left">
+                            <span class="key-icon">←</span>
+                            <span class="key-label">تحرك لليسار</span>
+                        </div>
+                        <div class="key up" id="key-up">
+                            <span class="key-icon">↑</span>
+                            <span class="key-label">تحرك للأعلى</span>
+                        </div>
+                        <div class="key right" id="key-right">
+                            <span class="key-icon">→</span>
+                            <span class="key-label">تحرك لليمين</span>
+                        </div>
+                        <div class="key down" id="key-down">
+                            <span class="key-icon">↓</span>
+                            <span class="key-label">تحرك للأسفل</span>
+                        </div>
+                        <div class="key space" id="key-space">
+                            <span class="key-icon"><i class="fas fa-bolt"></i></span>
+                            <span class="key-label">دفعة سريعة للأعلى</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="instructions">
+                    <h2><i class="fas fa-info-circle"></i> كيفية اللعب</h2>
+                    <ul>
+                        <li><i class="fas fa-arrow-up"></i> اللعبة تتجه للأعلى - اصعد لأعلى مسافة ممكنة</li>
+                        <li><i class="fas fa-arrows-alt-h"></i> استخدم مفاتيح اليمين واليسار للتحرك أفقيًا</li>
+                        <li><i class="fas fa-bolt"></i> استخدم مفتاح المسافة للدفع السريع للأعلى</li>
+                        <li><i class="fas fa-coins"></i> اجمع النقود الذهبية لزيادة نقاطك</li>
+                        <li><i class="fas fa-heart"></i> تجنب العقبات الحمراء والجدران</li>
+                        <li><i class="fas fa-heartbeat"></i> اجمع القلوب الحمراء لزيادة عدد القلوب</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="game-container">
+                    <canvas id="game-canvas"></canvas>
+                    
+                    <div class="start-message" id="start-message">
+                        <h2><i class="fas fa-gamepad"></i> عداء النقود</h2>
+                        <p>لعبة متجهة للأعلى - اصعد وأجمع النقود</p>
+                        <div class="character-preview">
+                            <canvas id="character-preview-canvas" width="100" height="120"></canvas>
+                        </div>
+                        <p>لديك 3 قلوب - كل اصطدام يخسرك قلباً</p>
+                        <p>تظهر قلوب حمراء بشكل دوري لزيادة القلوب</p>
+                        <button class="btn" id="start-btn">ابدأ اللعبة</button>
+                    </div>
+                    
+                    <div class="game-message" id="game-over">
+                        <h2><i class="fas fa-gamepad"></i> انتهت اللعبة</h2>
+                        <div class="stats-summary">
+                            <div class="stat-final">
+                                <div class="stat-final-value" id="final-score">0</div>
+                                <div class="stat-final-label">النتيجة النهائية</div>
+                            </div>
+                            <div class="stat-final">
+                                <div class="stat-final-value" id="final-height">0</div>
+                                <div class="stat-final-label">الارتفاع الأقصى</div>
+                            </div>
+                            <div class="stat-final">
+                                <div class="stat-final-value" id="final-coins">0</div>
+                                <div class="stat-final-label">النقود المجموعة</div>
+                            </div>
+                            <div class="stat-final">
+                                <div class="stat-final-value" id="final-hearts">0</div>
+                                <div class="stat-final-label">القلوب المتبقية</div>
+                            </div>
+                        </div>
+                        <button class="btn" id="restart-btn"><i class="fas fa-redo"></i> إعادة اللعبة</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>لعبة "عداء النقود" - نسخة متجهة للأعلى</p>
+            <p>صممت خصيصاً للعب باستخدام لوحة المفاتيح</p>
+        </footer>
+    </div>
+
+    <!-- Font Awesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+
+    <script>
+        // ============ تهيئة العناصر ============
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const previewCanvas = document.getElementById('character-preview-canvas');
+        const previewCtx = previewCanvas.getContext('2d');
+        
+        // عناصر واجهة المستخدم
+        const coinsElement = document.getElementById('coins');
+        const scoreElement = document.getElementById('score');
+        const heightElement = document.getElementById('height');
+        const speedElement = document.getElementById('speed');
+        const heartsContainer = document.getElementById('hearts');
+        const startMessage = document.getElementById('start-message');
+        const gameOverScreen = document.getElementById('game-over');
+        const startBtn = document.getElementById('start-btn');
+        const restartBtn = document.getElementById('restart-btn');
+        
+        // عناصر النتائج النهائية
+        const finalScore = document.getElementById('final-score');
+        const finalHeight = document.getElementById('final-height');
+        const finalCoins = document.getElementById('final-coins');
+        const finalHearts = document.getElementById('final-hearts');
+        
+        // أزرار التحكم
+        const keyElements = {
+            up: document.getElementById('key-up'),
+            down: document.getElementById('key-down'),
+            left: document.getElementById('key-left'),
+            right: document.getElementById('key-right'),
+            space: document.getElementById('key-space')
+        };
+        
+        // ============ إعداد اللعبة ============
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // ============ حالة اللعبة ============
+        const gameState = {
+            coins: 0,
+            score: 0,
+            height: 0,
+            maxHeight: 0,
+            lives: 3,
+            speed: 3.0,
+            scrollY: 0, // التمرير الرأسي للخلفية
+            gameRunning: false,
+            gameOver: false,
+            lastHeartSpawn: 0,
+            heartSpawnInterval: 15000,
+            lastObstacleSpawn: 0,
+            obstacleSpawnInterval: 2000,
+            lastCoinSpawn: 0,
+            coinSpawnInterval: 800
+        };
+        
+        // ============ الشخصية الرئيسية (مستوحاة من الصورة) ============
+        const player = {
+            x: 0,
+            y: 0,
+            width: 50,
+            height: 80,
+            speed: 6,
+            boostPower: 15,
+            velocityY: 0,
+            velocityX: 0,
+            color: '#4a90e2', // أزرق للجسم
+            faceColor: '#ffd1a9', // لون البشرة
+            hairColor: '#8b4513', // بني للشعر
+            clothesColor: '#ff6b6b', // أحمر للثياب
+            isBoosting: false,
+            boostTime: 0
+        };
+        
+        // ============ الكائنات في اللعبة ============
+        let coins = [];
+        let hearts = [];
+        let obstacles = [];
+        let clouds = [];
+        let effects = [];
+        
+        // ============ التحكم ============
+        const keys = {
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+            space: false
+        };
+        
+        // ============ رسم الشخصية في العرض التقديمي ============
+        function drawCharacterPreview() {
+            previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            
+            // رسم الجسم
+            previewCtx.fillStyle = player.clothesColor;
+            previewCtx.fillRect(40, 60, 20, 30);
+            
+            // رسم الرأس
+            previewCtx.fillStyle = player.faceColor;
+            previewCtx.beginPath();
+            previewCtx.arc(50, 40, 15, 0, Math.PI * 2);
+            previewCtx.fill();
+            
+            // رسم الشعر (مستوحى من الصورة)
+            previewCtx.fillStyle = player.hairColor;
+            previewCtx.beginPath();
+            previewCtx.arc(50, 35, 18, 0, Math.PI * 1.2);
+            previewCtx.fill();
+            
+            // رسم العيون
+            previewCtx.fillStyle = '#000';
+            previewCtx.beginPath();
+            previewCtx.arc(45, 38, 2, 0, Math.PI * 2);
+            previewCtx.arc(55, 38, 2, 0, Math.PI * 2);
+            previewCtx.fill();
+            
+            // رسم الابتسامة
+            previewCtx.strokeStyle = '#000';
+            previewCtx.lineWidth = 1;
+            previewCtx.beginPath();
+            previewCtx.arc(50, 45, 6, 0.2, 0.8 * Math.PI);
+            previewCtx.stroke();
+            
+            // رسم الذراعين
+            previewCtx.fillStyle = player.faceColor;
+            previewCtx.fillRect(35, 60, 10, 20);
+            previewCtx.fillRect(55, 60, 10, 20);
+            
+            // رسم الساقين
+            previewCtx.fillStyle = '#2c3e50';
+            previewCtx.fillRect(42, 90, 6, 25);
+            previewCtx.fillRect(52, 90, 6, 25);
+            
+            // تأثير الطفو
+            previewCtx.save();
+            previewCtx.globalAlpha = 0.3;
+            previewCtx.fillStyle = '#4a90e2';
+            previewCtx.beginPath();
+            previewCtx.ellipse(50, 120, 25, 10, 0, 0, Math.PI * 2);
+            previewCtx.fill();
+            previewCtx.restore();
+        }
+        
+        // ============ تهيئة اللعبة ============
+        function initGame() {
+            // إعادة تعيين حالة اللعبة
+            gameState.coins = 0;
+            gameState.score = 0;
+            gameState.height = 0;
+            gameState.maxHeight = 0;
+            gameState.lives = 3;
+            gameState.speed = 3.0;
+            gameState.scrollY = 0;
+            gameState.gameRunning = true;
+            gameState.gameOver = false;
+            gameState.lastHeartSpawn = Date.now();
+            gameState.lastObstacleSpawn = Date.now();
+            gameState.lastCoinSpawn = Date.now();
+            
+            // إعادة تعيين موقع اللاعب
+            player.x = canvas.width / 2;
+            player.y = canvas.height * 0.7;
+            player.velocityY = 0;
+            player.velocityX = 0;
+            player.isBoosting = false;
+            player.boostTime = 0;
+            
+            // إعادة تعيين الكائنات
+            coins = [];
+            hearts = [];
+            obstacles = [];
+            clouds = [];
+            effects = [];
+            
+            // إنشاء الغيوم الخلفية
+            for (let i = 0; i < 15; i++) {
+                clouds.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    width: 60 + Math.random() * 80,
+                    height: 30 + Math.random() * 30,
+                    speed: 0.5 + Math.random() * 1,
+                    color: `rgba(255, 255, 255, ${0.3 + Math.random() * 0.4})`
+                });
+            }
+            
+            // إنشاء بعض النقود الأولية
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => spawnCoin(), i * 300);
+            }
+            
+            // إنشاء بعض العقبات الأولية
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => spawnObstacle(), i * 800);
+            }
+            
+            // تحديث واجهة المستخدم
+            updateHeartsDisplay();
+            updateUI();
+            
+            // إخفاء الرسائل
+            startMessage.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            
+            // رسم الشخصية في العرض التقديمي
+            drawCharacterPreview();
+        }
+        
+        // ============ تحديث واجهة المستخدم ============
+        function updateHeartsDisplay() {
+            const heartsHTML = [];
+            for (let i = 0; i < 3; i++) {
+                if (i < gameState.lives) {
+                    heartsHTML.push('<div class="heart"><i class="fas fa-heart"></i></div>');
+                } else {
+                    heartsHTML.push('<div class="heart lost"><i class="fas fa-heart"></i></div>');
+                }
+            }
+            heartsContainer.innerHTML = heartsHTML.join('');
+        }
+        
+        function updateUI() {
+            coinsElement.textContent = gameState.coins;
+            scoreElement.textContent = gameState.score;
+            heightElement.textContent = Math.floor(gameState.maxHeight);
+            speedElement.textContent = gameState.speed.toFixed(1);
+            
+            // تحديث أزرار التحكم
+            Object.keys(keys).forEach(key => {
+                if (keyElements[key]) {
+                    if (keys[key]) {
+                        keyElements[key].classList.add('active');
+                    } else {
+                        keyElements[key].classList.remove('active');
+                    }
+                }
+            });
+        }
+        
+        // ============ إنشاء التأثيرات ============
+        function createEffect(x, y, type) {
+            effects.push({
+                x: x,
+                y: y,
+                type: type,
+                life: 1.0,
+                size: type === 'coin' ? 15 : 20,
+                color: type === 'coin' ? '#ffd700' : '#ff3838',
+                velocityY: type === 'coin' ? -3 : -2
+            });
+        }
+        
+        // ============ إنشاء الكائنات ============
+        function spawnCoin() {
+            const now = Date.now();
+            if (now - gameState.lastCoinSpawn > gameState.coinSpawnInterval) {
+                gameState.lastCoinSpawn = now;
+                
+                const coinX = Math.random() * (canvas.width - 40) + 20;
+                const coinY = -30 - gameState.scrollY; // تظهر من الأعلى
+                
+                coins.push({
+                    x: coinX,
+                    y: coinY,
+                    radius: 12,
+                    color: '#ffd700',
+                    collected: false,
+                    rotation: Math.random() * Math.PI * 2,
+                    bob: 0
+                });
+                
+                // زيادة وتيرة ظهور العملات مع الارتفاع
+                gameState.coinSpawnInterval = Math.max(400, 800 - gameState.maxHeight * 0.01);
+            }
+        }
+        
+        function spawnHeart() {
+            const now = Date.now();
+            if (now - gameState.lastHeartSpawn > gameState.heartSpawnInterval) {
+                gameState.lastHeartSpawn = now;
+                
+                const heartX = Math.random() * (canvas.width - 50) + 25;
+                const heartY = -40 - gameState.scrollY;
+                
+                hearts.push({
+                    x: heartX,
+                    y: heartY,
+                    width: 25,
+                    height: 25,
+                    color: '#ff3838',
+                    collected: false,
+                    pulse: 0,
+                    bob: 0
+                });
+                
+                // تقليل وقت ظهور القلب التالي
+                gameState.heartSpawnInterval = Math.max(10000, 15000 - gameState.maxHeight * 0.02);
+            }
+        }
+        
+        function spawnObstacle() {
+            const now = Date.now();
+            if (now - gameState.lastObstacleSpawn > gameState.obstacleSpawnInterval) {
+                gameState.lastObstacleSpawn = now;
+                
+                // أنواع مختلفة من العقبات
+                const obstacleTypes = [
+                    { width: 80, height: 30, color: '#ff3838', type: 'horizontal' }, // عقبة أفقية
+                    { width: 30, height: 80, color: '#ff3838', type: 'vertical' },   // عقبة رأسية
+                    { width: 60, height: 60, color: '#ff3838', type: 'square' }      // عقبة مربعة
+                ];
+                
+                const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+                
+                let obstacleX, obstacleY;
+                
+                if (type.type === 'horizontal') {
+                    obstacleX = Math.random() * (canvas.width - type.width);
+                    obstacleY = -40 - gameState.scrollY;
+                } else if (type.type === 'vertical') {
+                    obstacleX = Math.random() > 0.5 ? 0 : canvas.width - type.width;
+                    obstacleY = -40 - gameState.scrollY;
+                } else {
+                    obstacleX = Math.random() * (canvas.width - type.width);
+                    obstacleY = -40 - gameState.scrollY;
+                }
+                
+                // 30% احتمال أن تتحرك العقبة
+                let speedX = 0;
+                if (Math.random() > 0.7 && type.type !== 'vertical') {
+                    speedX = (Math.random() > 0.5 ? 1 : -1) * (2 + Math.random() * 2);
+                }
+                
+                obstacles.push({
+                    x: obstacleX,
+                    y: obstacleY,
+                    width: type.width,
+                    height: type.height,
+                    color: type.color,
+                    speedX: speedX,
+                    rotation: 0,
+                    type: type.type
+                });
+                
+                // زيادة صعوبة اللعبة
+                gameState.obstacleSpawnInterval = Math.max(800, 2000 - gameState.maxHeight * 0.02);
+            }
+        }
+        
+        // ============ تحديث الكائنات ============
+        function updateObjects() {
+            // زيادة التمرير الرأسي (اللعبة تتجه للأعلى)
+            const scrollSpeed = gameState.speed * 0.5;
+            gameState.scrollY += scrollSpeed;
+            
+            // تحديث الارتفاع
+            gameState.height = gameState.scrollY;
+            if (gameState.height > gameState.maxHeight) {
+                gameState.maxHeight = gameState.height;
+            }
+            
+            // تحديث الغيوم
+            clouds.forEach(cloud => {
+                cloud.y += cloud.speed + scrollSpeed * 0.3;
+                if (cloud.y > canvas.height) {
+                    cloud.y = -50;
+                    cloud.x = Math.random() * canvas.width;
+                }
+            });
+            
+            // تحديث النقود
+            coins.forEach(coin => {
+                coin.y += scrollSpeed;
+                coin.rotation += 0.05;
+                coin.bob += 0.05;
+                coin.x += Math.sin(coin.bob * 0.5) * 0.5;
+                
+                if (coin.y > canvas.height + 50) {
+                    coin.collected = true;
+                }
+            });
+            
+            // تحديث القلوب
+            hearts.forEach(heart => {
+                heart.y += scrollSpeed;
+                heart.pulse += 0.05;
+                heart.bob += 0.03;
+                heart.x += Math.sin(heart.bob) * 0.5;
+                
+                if (heart.y > canvas.height + 50) {
+                    heart.collected = true;
+                }
+            });
+            
+            // تحديث العقبات
+            obstacles.forEach(obstacle => {
+                obstacle.y += scrollSpeed;
+                obstacle.x += obstacle.speedX;
+                
+                // عكس اتجاه العقبات المتحركة عند الحواف
+                if (obstacle.speedX !== 0) {
+                    if (obstacle.x <= 0 || obstacle.x + obstacle.width >= canvas.width) {
+                        obstacle.speedX *= -1;
+                    }
+                }
+                
+                if (obstacle.y > canvas.height + 100) {
+                    obstacle.collected = true;
+                }
+            });
+            
+            // تحديث التأثيرات
+            effects.forEach(effect => {
+                effect.life -= 0.02;
+                effect.y += effect.velocityY;
+                if (effect.type === 'coin') {
+                    effect.size += 0.3;
+                }
+            });
+            
+            // إزالة الكائنات التي تم جمعها أو خرجت من الشاشة
+            coins = coins.filter(coin => !coin.collected);
+            hearts = hearts.filter(heart => !heart.collected);
+            obstacles = obstacles.filter(obstacle => !obstacle.collected);
+            effects = effects.filter(effect => effect.life > 0);
+            
+            // زيادة السرعة مع الارتفاع
+            gameState.speed = 3.0 + gameState.maxHeight * 0.001;
+            
+            // إنشاء كائنات جديدة
+            spawnCoin();
+            spawnHeart();
+            spawnObstacle();
+        }
+        
+        // ============ التحقق من التصادمات ============
+        function checkCollisions() {
+            // حدود الشاشة
+            if (player.x < player.width/2) {
+                player.x = player.width/2;
+                loseLife();
+            }
+            if (player.x > canvas.width - player.width/2) {
+                player.x = canvas.width - player.width/2;
+                loseLife();
+            }
+            
+            // التحقق من جمع النقود
+            coins.forEach(coin => {
+                if (
+                    !coin.collected &&
+                    player.x + player.width/2 > coin.x - coin.radius &&
+                    player.x - player.width/2 < coin.x + coin.radius &&
+                    player.y + player.height/2 > coin.y - coin.radius &&
+                    player.y - player.height/2 < coin.y + coin.radius
+                ) {
+                    coin.collected = true;
+                    gameState.coins++;
+                    gameState.score += 100;
+                    createEffect(coin.x, coin.y, 'coin');
+                }
+            });
+            
+            // التحقق من جمع القلوب
+            hearts.forEach(heart => {
+                if (
+                    !heart.collected &&
+                    player.x + player.width/2 > heart.x &&
+                    player.x - player.width/2 < heart.x + heart.width &&
+                    player.y + player.height/2 > heart.y &&
+                    player.y - player.height/2 < heart.y + heart.height
+                ) {
+                    heart.collected = true;
+                    if (gameState.lives < 3) {
+                        gameState.lives++;
+                        updateHeartsDisplay();
+                    }
+                    gameState.score += 500;
+                    createEffect(heart.x + heart.width/2, heart.y + heart.height/2, 'heart');
+                }
+            });
+            
+            // التحقق من الاصطدام بالعقبات
+            obstacles.forEach(obstacle => {
+                if (
+                    player.x + player.width/2 > obstacle.x &&
+                    player.x - player.width/2 < obstacle.x + obstacle.width &&
+                    player.y + player.height/2 > obstacle.y &&
+                    player.y - player.height/2 < obstacle.y + obstacle.height
+                ) {
+                    loseLife();
+                    
+                    // دفع اللاعب بعيداً عن العقبة
+                    const dx = (player.x + player.width/2) - (obstacle.x + obstacle.width/2);
+                    const dy = (player.y + player.height/2) - (obstacle.y + obstacle.height/2);
+                    
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        player.x += dx > 0 ? 30 : -30;
+                    } else {
+                        player.y += dy > 0 ? 30 : -30;
+                    }
+                }
+            });
+        }
+        
+        // ============ إعادة تعيين اللاعب ============
+        function resetPlayer() {
+            player.x = canvas.width / 2;
+            player.y = canvas.height * 0.7;
+            player.velocityY = 0;
+            player.velocityX = 0;
+            player.isBoosting = false;
+            player.boostTime = 0;
+        }
+        
+        // ============ خسارة قلب ============
+        function loseLife() {
+            gameState.lives--;
+            updateHeartsDisplay();
+            
+            if (gameState.lives <= 0) {
+                endGame();
+            } else {
+                resetPlayer();
+            }
+        }
+        
+        // ============ انتهاء اللعبة ============
+        function endGame() {
+            gameState.gameRunning = false;
+            gameState.gameOver = true;
+            
+            finalScore.textContent = gameState.score;
+            finalHeight.textContent = Math.floor(gameState.maxHeight);
+            finalCoins.textContent = gameState.coins;
+            finalHearts.textContent = gameState.lives;
+            
+            setTimeout(() => {
+                gameOverScreen.style.display = 'block';
+            }, 500);
+        }
+        
+        // ============ تحديث اللعبة ============
+        function update() {
+            if (!gameState.gameRunning) return;
+            
+            // الحركة الأفقية
+            if (keys.left && !keys.right) {
+                player.velocityX = -player.speed;
+            } else if (keys.right && !keys.left) {
+                player.velocityX = player.speed;
+            } else {
+                player.velocityX *= 0.8; // مقاومة للحركة
+            }
+            
+            // الحركة العمودية (للأعلى والأسفل داخل الشاشة)
+            if (keys.up && !keys.down) {
+                player.velocityY = -player.speed * 0.7;
+            } else if (keys.down && !keys.up) {
+                player.velocityY = player.speed * 0.7;
+            } else {
+                player.velocityY *= 0.8;
+            }
+            
+            // الدفع السريع للأعلى
+            if (keys.space && !player.isBoosting) {
+                player.isBoosting = true;
+                player.boostTime = 20; // 20 إطار للدفع
+                player.velocityY = -player.boostPower;
+            }
+            
+            // تحديث وقت الدفع
+            if (player.isBoosting) {
+                player.boostTime--;
+                if (player.boostTime <= 0) {
+                    player.isBoosting = false;
+                }
+            }
+            
+            // تطبيق الحركة
+            player.x += player.velocityX;
+            player.y += player.velocityY;
+            
+            // حدود الشاشة
+            player.x = Math.max(player.width/2, Math.min(canvas.width - player.width/2, player.x));
+            player.y = Math.max(player.height/2, Math.min(canvas.height - player.height/2, player.y));
+            
+            // تحديث الكائنات
+            updateObjects();
+            
+            // التحقق من التصادمات
+            checkCollisions();
+            
+            // تحديث واجهة المستخدم
+            updateUI();
+        }
+        
+        // ============ رسم اللعبة ============
+        function draw() {
+            // مسح الشاشة
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB'); // أزرق فاتح للأعلى
+            gradient.addColorStop(1, '#1e90ff'); // أزرق غامق للأسفل
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // رسم الغيوم
+            clouds.forEach(cloud => {
+                ctx.fillStyle = cloud.color;
+                drawCloud(ctx, cloud.x, cloud.y, cloud.width, cloud.height);
+            });
+            
+            // رسم الأرض (في الأسفل)
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(0, canvas.height - 50, canvas.width, 50);
+            
+            // رسم النقود
+            coins.forEach(coin => {
+                ctx.save();
+                ctx.translate(coin.x, coin.y);
+                ctx.rotate(coin.rotation);
+                
+                // الجسم الذهبي
+                const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, coin.radius);
+                gradient.addColorStop(0, '#ffd700');
+                gradient.addColorStop(1, '#ff9500');
+                ctx.fillStyle = gradient;
+                
+                ctx.beginPath();
+                ctx.ellipse(0, 0, coin.radius, coin.radius * 0.7, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // تفاصيل العملة
+                ctx.fillStyle = '#ffed4e';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, coin.radius * 0.6, coin.radius * 0.4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // علامة الدولار
+                ctx.fillStyle = '#fff';
+                ctx.font = `bold ${coin.radius * 0.8}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('$', 0, 0);
+                
+                ctx.restore();
+            });
+            
+            // رسم القلوب
+            hearts.forEach(heart => {
+                ctx.save();
+                ctx.translate(heart.x + heart.width/2, heart.y + heart.height/2);
+                
+                // تأثير النبض
+                const pulseSize = 1 + Math.sin(heart.pulse) * 0.1;
+                ctx.scale(pulseSize, pulseSize);
+                
+                // رسم القلب
+                ctx.fillStyle = heart.color;
+                ctx.beginPath();
+                ctx.moveTo(0, -heart.height/3);
+                ctx.bezierCurveTo(
+                    heart.width/2, -heart.height/2,
+                    heart.width/2, heart.height/3,
+                    0, heart.height/2
+                );
+                ctx.bezierCurveTo(
+                    -heart.width/2, heart.height/3,
+                    -heart.width/2, -heart.height/2,
+                    0, -heart.height/3
+                );
+                ctx.closePath();
+                ctx.fill();
+                
+                // تأثير لامع
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.beginPath();
+                ctx.ellipse(-heart.width/4, -heart.height/4, heart.width/6, heart.height/6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            });
+            
+            // رسم العقبات
+            obstacles.forEach(obstacle => {
+                ctx.save();
+                
+                // الجسم الرئيسي
+                ctx.fillStyle = obstacle.color;
+                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                
+                // تفاصيل العقبة
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillRect(obstacle.x + 5, obstacle.y + 5, obstacle.width - 10, obstacle.height - 10);
+                
+                // علامة تعجب
+                ctx.fillStyle = '#fff';
+                ctx.font = `bold ${Math.min(obstacle.width, obstacle.height) * 0.4}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('!', obstacle.x + obstacle.width/2, obstacle.y + obstacle.height/2);
+                
+                ctx.restore();
+            });
+            
+            // رسم التأثيرات
+            effects.forEach(effect => {
+                ctx.save();
+                ctx.globalAlpha = effect.life;
+                
+                if (effect.type === 'coin') {
+                    ctx.fillStyle = effect.color;
+                    ctx.beginPath();
+                    ctx.arc(effect.x, effect.y, effect.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#fff';
+                    ctx.font = `bold ${effect.size * 0.8}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('$', effect.x, effect.y);
+                } else if (effect.type === 'heart') {
+                    ctx.fillStyle = effect.color;
+                    ctx.beginPath();
+                    ctx.moveTo(effect.x, effect.y - effect.size/2);
+                    ctx.bezierCurveTo(
+                        effect.x + effect.size/2, effect.y - effect.size,
+                        effect.x + effect.size/2, effect.y + effect.size/3,
+                        effect.x, effect.y + effect.size/2
+                    );
+                    ctx.bezierCurveTo(
+                        effect.x - effect.size/2, effect.y + effect.size/3,
+                        effect.x - effect.size/2, effect.y - effect.size,
+                        effect.x, effect.y - effect.size/2
+                    );
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            });
+            
+            // رسم الشخصية
+            drawPlayer();
+            
+            // رسم تأثيرات الدفع
+            if (player.isBoosting) {
+                drawBoostEffect();
+            }
+        }
+        
+        // ============ رسم الغيمة ============
+        function drawCloud(ctx, x, y, width, height) {
+            const circles = [
+                { x: x + width * 0.2, y: y + height * 0.3, r: height * 0.4 },
+                { x: x + width * 0.5, y: y + height * 0.2, r: height * 0.5 },
+                { x: x + width * 0.8, y: y + height * 0.3, r: height * 0.4 },
+                { x: x + width * 0.3, y: y + height * 0.6, r: height * 0.3 },
+                { x: x + width * 0.7, y: y + height * 0.6, r: height * 0.3 }
+            ];
+            
+            ctx.beginPath();
+            circles.forEach((circle, i) => {
+                if (i === 0) {
+                    ctx.moveTo(circle.x + circle.r, circle.y);
+                }
+                ctx.arc(circle.x, circle.y, circle.r, 0, Math.PI * 2);
+            });
+            ctx.fill();
+        }
+        
+        // ============ رسم الشخصية ============
+        function drawPlayer() {
+            ctx.save();
+            ctx.translate(player.x, player.y);
+            
+            // رسم الجسم (الملابس)
+            ctx.fillStyle = player.clothesColor;
+            ctx.fillRect(-player.width/4, -player.height/3, player.width/2, player.height/2);
+            
+            // رسم الذراعين
+            ctx.fillStyle = player.faceColor;
+            ctx.fillRect(-player.width/2, -player.height/4, player.width/4, player.height/3);
+            ctx.fillRect(player.width/4, -player.height/4, player.width/4, player.height/3);
+            
+            // رسم الرأس
+            ctx.fillStyle = player.faceColor;
+            ctx.beginPath();
+            ctx.arc(0, -player.height/2, player.width/3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // رسم الشعر (مستوحى من الصورة)
+            ctx.fillStyle = player.hairColor;
+            ctx.beginPath();
+            ctx.arc(0, -player.height/2 - 5, player.width/3 + 3, 0, Math.PI * 1.2);
+            ctx.fill();
+            
+            // رسم العيون
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.arc(-player.width/10, -player.height/2 - player.width/20, player.width/20, 0, Math.PI * 2);
+            ctx.arc(player.width/10, -player.height/2 - player.width/20, player.width/20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // رسم الابتسامة
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, -player.height/2 + player.width/10, player.width/10, 0.2, 0.8 * Math.PI);
+            ctx.stroke();
+            
+            // رسم الساقين
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(-player.width/6, player.height/6, player.width/6, player.height/3);
+            ctx.fillRect(player.width/12, player.height/6, player.width/6, player.height/3);
+            
+            ctx.restore();
+        }
+        
+        // ============ رسم تأثير الدفع ============
+        function drawBoostEffect() {
+            ctx.save();
+            ctx.translate(player.x, player.y + player.height/2);
+            
+            // تأثير الدفع (لهب أزرق)
+            const gradient = ctx.createLinearGradient(0, 0, 0, 30);
+            gradient.addColorStop(0, '#4a90e2');
+            gradient.addColorStop(0.5, '#87CEEB');
+            gradient.addColorStop(1, 'rgba(135, 206, 235, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.moveTo(-15, 0);
+            ctx.lineTo(0, 40);
+            ctx.lineTo(15, 0);
+            ctx.closePath();
+            ctx.fill();
+            
+            // جزيئات الدفع
+            for (let i = 0; i < 5; i++) {
+                const size = 2 + Math.random() * 4;
+                const x = -10 + Math.random() * 20;
+                const y = 20 + Math.random() * 30;
+                
+                ctx.fillStyle = `rgba(135, 206, 235, ${0.5 + Math.random() * 0.5})`;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.restore();
+        }
+        
+        // ============ حلقة اللعبة ============
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // ============ إعداد التحكم ============
+        function setupControls() {
+            // أحداث لوحة المفاتيح
+            document.addEventListener('keydown', (e) => {
+                switch(e.key.toLowerCase()) {
+                    case 'arrowup':
+                    case 'w':
+                        keys.up = true;
+                        e.preventDefault();
+                        break;
+                    case 'arrowdown':
+                    case 's':
+                        keys.down = true;
+                        e.preventDefault();
+                        break;
+                    case 'arrowleft':
+                    case 'a':
+                        keys.left = true;
+                        e.preventDefault();
+                        break;
+                    case 'arrowright':
+                    case 'd':
+                        keys.right = true;
+                        e.preventDefault();
+                        break;
+                    case ' ':
+                        keys.space = true;
+                        e.preventDefault();
+                        break;
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                switch(e.key.toLowerCase()) {
+                    case 'arrowup':
+                    case 'w':
+                        keys.up = false;
+                        break;
+                    case 'arrowdown':
+                    case 's':
+                        keys.down = false;
+                        break;
+                    case 'arrowleft':
+                    case 'a':
+                        keys.left = false;
+                        break;
+                    case 'arrowright':
+                    case 'd':
+                        keys.right = false;
+                        break;
+                    case ' ':
+                        keys.space = false;
+                        break;
+                }
+            });
+            
+            // أحداث الأزرار
+            startBtn.addEventListener('click', () => {
+                startMessage.style.display = 'none';
+                initGame();
+            });
+            
+            restartBtn.addEventListener('click', () => {
+                gameOverScreen.style.display = 'none';
+                initGame();
+            });
+        }
+        
+        // ============ بدء اللعبة ============
+        function startGame() {
+            setupControls();
+            drawCharacterPreview(); // رسم الشخصية في العرض التقديمي
+            gameLoop(); // بدء حلقة اللعبة
+        }
+        
+        // بدء اللعبة عند تحميل الصفحة
+        window.addEventListener('load', startGame);
+    </script>
+</body>
+</html>
